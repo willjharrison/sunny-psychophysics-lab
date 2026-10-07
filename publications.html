@@ -37,11 +37,11 @@
     © Sunny Psychophysics Lab — University of the Sunshine Coast
   </footer>
 
-  <script>
+ <script>
     const ZOTERO_GROUP_ID = '6706936';
-    const PUBS_COLLECTION_KEY = 'ANYVU4NC';
+    const PUBS_COLLECTION_KEY = 'YOUR_PUBS_KEY'; // Replace with 8-char key if using subfolder, or leave as ''
 
-    const API_URL = PUBS_COLLECTION_KEY !== 'ANYVU4NC'
+    const API_URL = (PUBS_COLLECTION_KEY && PUBS_COLLECTION_KEY !== 'YOUR_PUBS_KEY' && PUBS_COLLECTION_KEY.trim() !== '')
       ? `https://api.zotero.org/groups/${ZOTERO_GROUP_ID}/collections/${PUBS_COLLECTION_KEY}/items?v=3&format=json&sort=date&direction=desc`
       : `https://api.zotero.org/groups/${ZOTERO_GROUP_ID}/items?v=3&format=json&sort=date&direction=desc`;
 
@@ -49,32 +49,57 @@
       const container = document.getElementById('pubs-feed');
       try {
         const response = await fetch(API_URL);
-        if (!response.ok) throw new Error('Fetch failed');
-        const items = await response.json();
+        if (response.status === 403) {
+          container.innerHTML = `<div class="p-4 rounded border border-amber-800/50 bg-amber-950/20 text-amber-300 text-sm">Library Access Restricted: Set 'Library Reading' to 'Anyone on the internet' in Zotero group settings.</div>`;
+          return;
+        }
+        if (!response.ok) throw new Error(`HTTP Error ${response.status}`);
         
-        container.innerHTML = '';
-        items.forEach(item => {
-          const data = item.data;
-          if (data.itemType === 'attachment' || data.itemType === 'note') return;
+        const items = await response.json();
+        const pubItems = items.filter(item => item.data && item.data.itemType !== 'attachment' && item.data.itemType !== 'note');
 
+        if (pubItems.length === 0) {
+          container.innerHTML = `<p class="text-slate-400 text-sm">No publications found in this collection yet.</p>`;
+          return;
+        }
+
+        container.innerHTML = '';
+        pubItems.forEach(item => {
+          const data = item.data;
           const title = data.title || 'Untitled';
-          const year = data.date ? new Date(data.date).getFullYear() : '';
-          const authors = data.creators ? data.creators.map(c => `${c.firstName \vert{}\vert{} ''}${c.lastName || ''}`).join(', ') : '';
-          const journal = data.publicationTitle || data.journalAbbreviation || '';
+          
+          let year = '';
+          if (data.date) {
+            const match = data.date.match(/\d{4}/);
+            if (match) year = match[0];
+          }
+
+          let authors = '';
+          if (data.creators && Array.isArray(data.creators)) {
+            authors = data.creators
+              .map(c => c.name || `${c.firstName || ''} ${c.lastName || ''}`.trim())
+              .filter(Boolean)
+              .join(', ');
+          }
+
+          const journal = data.publicationTitle || data.journalAbbreviation || data.publisher || '';
           const link = data.url || (data.DOI ? `https://doi.org/${data.DOI}` : '#');
 
           const card = document.createElement('div');
           card.className = 'p-5 rounded-lg border border-slate-800 bg-slate-900/80 hover:border-slate-700 transition-colors';
           card.innerHTML = `
             <div class="flex justify-between items-start gap-4">
-              <a href="${link}" target="_blank" rel="noopener" class="font-semibold text-slate-100 hover:text-amber-400 text-base leading-snug">${title}</a>${year ? `<span class="px-2 py-0.5 rounded bg-slate-800 text-amber-400 text-xs font-mono">${year}</span>` : ''}
+              <a href="${link}" target="_blank" rel="noopener noreferrer" class="font-semibold text-slate-100 hover:text-amber-400 text-base leading-snug">${title}</a>
+              ${year ? `<span class="px-2 py-0.5 rounded bg-slate-800 text-amber-400 text-xs font-mono">${year}</span>` : ''}
             </div>
-            <p class="text-xs text-slate-400 mt-2">${authors}</p>${journal ? `<p class="text-xs text-amber-500/80 mt-1 italic">${journal}</p>` : ''}
+            ${authors ? `<p class="text-xs text-slate-400 mt-2">${authors}</p>` : ''}
+            ${journal ? `<p class="text-xs text-amber-500/80 mt-1 italic">${journal}</p>` : ''}
           `;
           container.appendChild(card);
         });
       } catch (e) {
-        container.innerHTML = `<p class="text-red-400 text-sm">Failed to load Zotero items. Check collection key.</p>`;
+        console.error(e);
+        container.innerHTML = `<p class="text-red-400 text-sm">Error connecting to Zotero (${e.message}).</p>`;
       }
     }
     loadPublications();
