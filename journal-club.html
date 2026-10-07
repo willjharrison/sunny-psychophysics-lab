@@ -3,15 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Journal Club | Sunny Psychophysics Lab</title>
+  <title>Journal Club | Sunny Psychophysics</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-950 text-slate-100 font-sans antialiased selection:bg-amber-500 selection:text-slate-950 min-h-screen flex flex-col justify-between">
 
+  <!-- Header / Navigation -->
   <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-50">
     <div class="max-w-5xl mx-auto px-6 py-4 flex justify-between items-center">
       <a href="index.html" class="flex items-center space-x-3">
-        <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-amber-500 to-amber-200 flex items-center justify-center font-bold text-slate-950 text-sm">ψ</div>
+        <img src="logo.png" alt="Sunny Psychophysics Logo" class="w-9 h-9 object-contain rounded" onerror="this.style.display='none'; document.getElementById('logo-fallback-jc').style.display='flex';">
+        <div id="logo-fallback-jc" class="w-8 h-8 rounded-full bg-gradient-to-tr from-amber-500 to-amber-200 hidden items-center justify-center font-bold text-slate-950 text-sm">ψ</div>
         <span class="font-bold text-lg tracking-tight text-slate-100">Sunny Psychophysics</span>
       </a>
       <nav class="flex space-x-6 text-sm font-medium text-slate-400">
@@ -22,13 +24,14 @@
     </div>
   </header>
 
+  <!-- Main Section -->
   <main class="py-16 max-w-5xl mx-auto px-6 w-full">
     <h1 class="text-3xl font-bold tracking-tight text-white mb-2">Journal Club</h1>
-    <p class="text-slate-400 text-sm mb-8">What we are reading next. Synced live from our visual neuroscience reading list.</p>
+    <p class="text-slate-400 text-sm mb-8">What we are reading next in visual neuroscience, active foraging, and computational perception.</p>
 
     <div id="jc-feed" class="space-y-4">
       <div class="p-4 rounded-lg border border-slate-800 bg-slate-900/60 text-slate-400 text-sm animate-pulse">
-        Fetching reading list...
+        Fetching reading list from Zotero...
       </div>
     </div>
   </main>
@@ -39,9 +42,10 @@
 
   <script>
     const ZOTERO_GROUP_ID = '6672785';
-    const JC_COLLECTION_KEY = 'YOUR_JC_KEY'; // Replace with 8-char key if using subfolder, or leave as ''
+    // Replace with 8-character Collection Key for "What we're reading next" or leave empty '' for whole library
+    const JC_COLLECTION_KEY = ''; 
 
-    const API_URL = (JC_COLLECTION_KEY && JC_COLLECTION_KEY !== 'YOUR_JC_KEY' && JC_COLLECTION_KEY.trim() !== '')
+    const API_URL = (JC_COLLECTION_KEY && JC_COLLECTION_KEY.trim() !== '')
       ? `https://api.zotero.org/groups/${ZOTERO_GROUP_ID}/collections/${JC_COLLECTION_KEY}/items?v=3&format=json&sort=dateAdded&direction=desc`
       : `https://api.zotero.org/groups/${ZOTERO_GROUP_ID}/items?v=3&format=json&sort=dateAdded&direction=desc`;
 
@@ -66,7 +70,7 @@
         container.innerHTML = '';
         jcItems.forEach(item => {
           const data = item.data;
-          const title = data.title || 'Untitled';
+          const title = data.title || 'Untitled paper';
           
           let authors = '';
           if (data.creators && Array.isArray(data.creators)) {
@@ -80,17 +84,19 @@
           const link = data.url || (data.DOI ? `https://doi.org/${data.DOI}` : '#');
 
           const card = document.createElement('div');
-          card.className = 'p-5 rounded-lg border border-slate-800 bg-slate-900/80 hover:border-slate-700 transition-colors';
+          card.className = 'p-5 rounded-lg border border-slate-800 bg-slate-900/80 hover:border-amber-500/40 transition-colors group';
           card.innerHTML = `
-            <a href="${link}" target="_blank" rel="noopener noreferrer" class="font-semibold text-slate-100 hover:text-amber-400 text-base leading-snug">${title}</a>
-            ${authors ? `<p class="text-xs text-slate-400 mt-2">${authors}</p>` : ''}
-            ${journal ? `<p class="text-xs text-amber-500/80 mt-1 italic">${journal}</p>` : ''}
+            <a href="${link}" target="_blank" rel="noopener noreferrer" class="block">
+              <span class="font-semibold text-slate-100 group-hover:text-amber-300 transition-colors text-base leading-snug">${title}</span>
+              ${authors ? `<p class="text-xs text-slate-400 mt-2">${authors}</p>` : ''}
+              ${journal ? `<p class="text-xs text-amber-500/80 mt-1 italic">${journal}</p>` : ''}
+            </a>
           `;
           container.appendChild(card);
         });
       } catch (e) {
         console.error(e);
-        container.innerHTML = `<p class="text-red-400 text-sm">Error connecting to Zotero (${e.message}).</p>`;
+        container.innerHTML = `<p class="text-red-400 text-sm">Error connecting to Zotero API (${e.message}).</p>`;
       }
     }
     loadJournalClub();
