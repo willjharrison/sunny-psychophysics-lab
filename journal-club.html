@@ -39,9 +39,9 @@
 
   <script>
     const ZOTERO_GROUP_ID = '6672785';
-    const JC_COLLECTION_KEY = 'NVLPHFWZ'; 
+    const JC_COLLECTION_KEY = 'YOUR_JC_KEY'; // Replace with 8-char key if using subfolder, or leave as ''
 
-    const API_URL = JC_COLLECTION_KEY !== 'NVLPHFWZ'
+    const API_URL = (JC_COLLECTION_KEY && JC_COLLECTION_KEY !== 'YOUR_JC_KEY' && JC_COLLECTION_KEY.trim() !== '')
       ? `https://api.zotero.org/groups/${ZOTERO_GROUP_ID}/collections/${JC_COLLECTION_KEY}/items?v=3&format=json&sort=dateAdded&direction=desc`
       : `https://api.zotero.org/groups/${ZOTERO_GROUP_ID}/items?v=3&format=json&sort=dateAdded&direction=desc`;
 
@@ -49,29 +49,48 @@
       const container = document.getElementById('jc-feed');
       try {
         const response = await fetch(API_URL);
-        if (!response.ok) throw new Error('Fetch failed');
+        if (response.status === 403) {
+          container.innerHTML = `<div class="p-4 rounded border border-amber-800/50 bg-amber-950/20 text-amber-300 text-sm">Library Access Restricted: Ask group owner to set 'Library Reading' to 'Anyone on the internet' in Zotero group settings.</div>`;
+          return;
+        }
+        if (!response.ok) throw new Error(`HTTP Error ${response.status}`);
+        
         const items = await response.json();
+        const jcItems = items.filter(item => item.data && item.data.itemType !== 'attachment' && item.data.itemType !== 'note');
+
+        if (jcItems.length === 0) {
+          container.innerHTML = `<p class="text-slate-400 text-sm">No items found in this reading list yet.</p>`;
+          return;
+        }
 
         container.innerHTML = '';
-        items.forEach(item => {
+        jcItems.forEach(item => {
           const data = item.data;
-          if (data.itemType === 'attachment' || data.itemType === 'note') return;
-
           const title = data.title || 'Untitled';
-          const authors = data.creators ? data.creators.map(c => `${c.firstName \vert{}\vert{} ''}${c.lastName || ''}`).join(', ') : '';
+          
+          let authors = '';
+          if (data.creators && Array.isArray(data.creators)) {
+            authors = data.creators
+              .map(c => c.name || `${c.firstName || ''} ${c.lastName || ''}`.trim())
+              .filter(Boolean)
+              .join(', ');
+          }
+
           const journal = data.publicationTitle || data.journalAbbreviation || '';
           const link = data.url || (data.DOI ? `https://doi.org/${data.DOI}` : '#');
 
           const card = document.createElement('div');
           card.className = 'p-5 rounded-lg border border-slate-800 bg-slate-900/80 hover:border-slate-700 transition-colors';
           card.innerHTML = `
-            <a href="${link}" target="_blank" rel="noopener" class="font-semibold text-slate-100 hover:text-amber-400 text-base leading-snug">${title}</a>
-            <p class="text-xs text-slate-400 mt-2">${authors}</p>${journal ? `<p class="text-xs text-amber-500/80 mt-1 italic">${journal}</p>` : ''}
+            <a href="${link}" target="_blank" rel="noopener noreferrer" class="font-semibold text-slate-100 hover:text-amber-400 text-base leading-snug">${title}</a>
+            ${authors ? `<p class="text-xs text-slate-400 mt-2">${authors}</p>` : ''}
+            ${journal ? `<p class="text-xs text-amber-500/80 mt-1 italic">${journal}</p>` : ''}
           `;
           container.appendChild(card);
         });
       } catch (e) {
-        container.innerHTML = `<p class="text-red-400 text-sm">Failed to load reading list. Check collection key.</p>`;
+        console.error(e);
+        container.innerHTML = `<p class="text-red-400 text-sm">Error connecting to Zotero (${e.message}).</p>`;
       }
     }
     loadJournalClub();
