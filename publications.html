@@ -6,157 +6,84 @@
   <title>Publications | Sunny Psychophysics</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-slate-950 text-slate-100 font-sans antialiased selection:bg-amber-500 selection:text-slate-950 min-h-screen flex flex-col justify-between">
+<body class="bg-amber-50/30 text-slate-800 font-sans antialiased selection:bg-amber-400 selection:text-slate-950 min-h-screen flex flex-col justify-between">
 
-  <!-- Header / Navigation -->
-  <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-50">
-    <div class="max-w-5xl mx-auto px-6 py-4 flex justify-between items-center">
-      <a href="index.html" class="flex items-center space-x-3">
-        <img src="logo.png" alt="Sunny Psychophysics Logo" class="w-9 h-9 object-contain rounded" onerror="this.style.display='none'; document.getElementById('logo-fallback-pub').style.display='flex';">
-        <div id="logo-fallback-pub" class="w-8 h-8 rounded-full bg-gradient-to-tr from-amber-500 to-amber-200 hidden items-center justify-center font-bold text-slate-950 text-sm">ψ</div>
-        <span class="font-bold text-lg tracking-tight text-slate-100">Sunny Psychophysics</span>
+  <header class="border-b border-amber-200/60 bg-white/90 backdrop-blur sticky top-0 z-50 shadow-sm">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-2 sm:gap-4">
+      <a href="index.html" class="flex items-center space-x-2.5 shrink-0">
+        <img src="logo.png" alt="Sunny Psychophysics Logo" class="w-8 h-8 object-contain rounded-full bg-amber-100" onerror="this.onerror=null; this.replaceWith(document.createElement('div')); document.querySelector('.logo-fallback').classList.remove('hidden');">
+        <div class="logo-fallback hidden w-8 h-8 rounded-full bg-gradient-to-tr from-amber-400 to-amber-200 flex items-center justify-center font-bold text-slate-900 text-xs sm:text-sm shadow-sm">ψ</div>
+        <span class="font-bold text-base sm:text-lg tracking-tight text-slate-900 whitespace-nowrap">
+          <span class="hidden sm:inline">Sunny Psychophysics</span>
+          <span class="inline sm:hidden">Sunny Psycho</span>
+        </span>
       </a>
-      <nav class="flex space-x-6 text-sm font-medium text-slate-400">
-        <a href="index.html" class="hover:text-amber-400 transition-colors">About & People</a>
-        <a href="publications.html" class="text-amber-400 font-semibold">Publications</a>
-        <a href="journal-club.html" class="hover:text-amber-400 transition-colors">Journal Club</a>
+      <nav class="flex items-center space-x-3 sm:space-x-6 text-xs sm:text-sm font-semibold text-slate-600 shrink-0">
+        <a href="index.html" class="hover:text-amber-600 transition-colors whitespace-nowrap">About</a>
+        <a href="publications.html" class="text-amber-600 font-bold whitespace-nowrap">Publications</a>
+        <a href="journal-club.html" class="hover:text-amber-600 transition-colors whitespace-nowrap">Journal Club</a>
       </nav>
     </div>
   </header>
 
-  <main class="py-16 max-w-5xl mx-auto px-6 w-full">
-    <h1 class="text-3xl font-bold tracking-tight text-white mb-2">Publications</h1>
-    <p class="text-slate-400 text-sm mb-8">Selected publications and preprints from the lab, formatted in APA 7th style and synced directly from Zotero.</p>
+  <main class="py-12 sm:py-16 max-w-5xl mx-auto px-6 w-full">
+    <h1 class="text-3xl font-extrabold tracking-tight text-slate-900 mb-2">Publications</h1>
+    <p class="text-slate-600 text-sm mb-8">Selected papers and preprints from the lab, updated live from Zotero.</p>
 
-    <!-- Publication list feed container -->
     <div id="pubs-feed" class="space-y-4">
-      <div class="p-4 rounded-lg border border-slate-800 bg-slate-900/60 text-slate-400 text-sm animate-pulse">
-        Fetching publications from Zotero...
+      <div class="p-4 rounded-xl border border-slate-200 bg-white text-slate-500 text-sm animate-pulse shadow-sm">
+        Loading publications...
       </div>
     </div>
   </main>
 
-  <footer class="py-8 border-t border-slate-800 text-center text-xs text-slate-500">
+  <footer class="py-8 border-t border-amber-200/60 bg-white text-center text-xs text-slate-500">
     © Sunny Psychophysics Lab — University of the Sunshine Coast
   </footer>
 
   <script>
     const ZOTERO_GROUP_ID = '6706936';
-    // Replace with 8-character Collection Key for "Lab Member Pub's" or leave empty '' for whole library
     const PUBS_COLLECTION_KEY = ''; 
 
     const API_URL = (PUBS_COLLECTION_KEY && PUBS_COLLECTION_KEY.trim() !== '')
       ? `https://api.zotero.org/groups/${ZOTERO_GROUP_ID}/collections/${PUBS_COLLECTION_KEY}/items?v=3&format=json&sort=date&direction=desc`
       : `https://api.zotero.org/groups/${ZOTERO_GROUP_ID}/items?v=3&format=json&sort=date&direction=desc`;
 
-    /**
-     * Converts a Zotero creator array to APA 7th author string format
-     * e.g., "Harrison, W. J., Beale, H., & Gu, C."
-     */
-    function formatAPAAuthors(creators) {
-      if (!creators || !Array.isArray(creators) || creators.length === 0) return '';
-      
-      const authorList = creators.map(c => {
-        if (c.name) return c.name; // Single string organization name
-        
-        const lastName = c.lastName ? c.lastName.trim() : '';
-        let initials = '';
-        if (c.firstName) {
-          initials = c.firstName
-            .trim()
-            .split(/\s+/)
-            .map(part => part.charAt(0).toUpperCase() + '.')
-            .join(' ');
-        }
-        return lastName ? `${lastName}${initials ? ', ' + initials : ''}` : initials;
-      }).filter(Boolean);
-
-      if (authorList.length === 0) return '';
-      if (authorList.length === 1) return authorList[0];
-      if (authorList.length === 2) return `${authorList[0]}, & ${authorList[1]}`;
-      if (authorList.length <= 20) {
-        return `${authorList.slice(0, -1).join(', ')}, & ${authorList[authorList.length - 1]}`;
-      }
-      // APA 7th: More than 20 authors -> list first 19, then ellipses, then final author
-      return `${authorList.slice(0, 19).join(', ')} ... ${authorList[authorList.length - 1]}`;
-    }
-
     async function loadPublications() {
       const container = document.getElementById('pubs-feed');
       try {
         const response = await fetch(API_URL);
-        
         if (response.status === 403) {
-          container.innerHTML = `<div class="p-4 rounded border border-amber-800/50 bg-amber-950/20 text-amber-300 text-sm">Zotero group library access restricted. Ensure 'Library Reading' is set to 'Anyone on the internet' in Zotero group settings.</div>`;
+          container.innerHTML = `<div class="p-4 rounded-lg border border-amber-300 bg-amber-50 text-amber-800 text-sm">Library Access Restricted: Set 'Library Reading' to 'Anyone on the internet' in Zotero group settings.</div>`;
           return;
         }
-
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        if (!response.ok) throw new Error(`HTTP Error ${response.status}`);
         
         const items = await response.json();
         const pubItems = items.filter(item => item.data && item.data.itemType !== 'attachment' && item.data.itemType !== 'note');
 
         if (pubItems.length === 0) {
-          container.innerHTML = `<p class="text-slate-400 text-sm">No items found in this collection yet.</p>`;
+          container.innerHTML = `<p class="text-slate-500 text-sm">No publications found in this collection yet.</p>`;
           return;
         }
 
         container.innerHTML = '';
         pubItems.forEach(item => {
           const data = item.data;
+          const title = data.title || 'Untitled';
           
-          // 1. Authors
-          const authorsAPA = formatAPAAuthors(data.creators);
-          
-          // 2. Year
-          let yearAPA = 'n.d.';
+          let year = '';
           if (data.date) {
             const match = data.date.match(/\d{4}/);
-            if (match) yearAPA = match[0];
+            if (match) year = match[0];
           }
 
-          // 3. Title
-          const titleAPA = data.title ? data.title.trim() : 'Untitled publication';
-
-          // 4. Source / Journal / Volume / Issue / Pages
-          const journal = data.publicationTitle || data.journalAbbreviation || data.publisher || '';
-          const volume = data.volume ? data.volume : '';
-          const issue = data.issue ? `(${data.issue})` : '';
-          const pages = data.pages ? `, ${data.pages}` : '';
-          
-          let journalAPA = '';
-          if (journal) {
-            journalAPA = `<i class="italic text-slate-200">${journal}</i>`;
-            if (volume) journalAPA += `, <i class="italic text-slate-200">${volume}</i>${issue}`;
-            if (pages) journalAPA += pages;
+          let authors = '';
+          if (data.creators && Array.isArray(data.creators)) {
+            authors = data.creators
+              .map(c => c.name || `${c.firstName || ''} ${c.lastName || ''}`.trim())
+              .filter(Boolean)
+              .join(', ');
           }
 
-          // 5. Target Hyperlink
-          const targetUrl = data.url || (data.DOI ? `https://doi.org/${data.DOI}` : '#');
-
-          // Assemble APA 7th Reference Card
-          const card = document.createElement('div');
-          card.className = 'p-5 rounded-lg border border-slate-800 bg-slate-900/80 hover:border-amber-500/40 transition-colors group';
-          
-          card.innerHTML = `
-            <a href="${targetUrl}" target="_blank" rel="noopener noreferrer" class="block text-slate-300 text-base leading-relaxed hover:text-amber-300 transition-colors">
-              ${authorsAPA ? `<span class="text-slate-100 font-medium">${authorsAPA}</span> ` : ''}
-              <span class="text-slate-400">(${yearAPA}).</span> 
-              <span class="text-amber-100 font-semibold group-hover:underline underline-offset-4 decoration-amber-500/50">${titleAPA}.</span> 
-              ${journalAPA ? `<span>${journalAPA}.</span> ` : ''}
-              <span class="inline-flex items-center text-amber-400/90 text-xs font-mono ml-1 group-hover:translate-x-0.5 transition-transform">
-                ${data.DOI ? `https://doi.org/${data.DOI}` : targetUrl !== '#' ? targetUrl : ''} ↗
-              </span>
-            </a>
-          `;
-          container.appendChild(card);
-        });
-      } catch (e) {
-        console.error(e);
-        container.innerHTML = `<p class="text-red-400 text-sm">Error connecting to Zotero API (${e.message}).</p>`;
-      }
-    }
-    loadPublications();
-  </script>
-</body>
-</html>
+          const journal = data.publicationTitle
