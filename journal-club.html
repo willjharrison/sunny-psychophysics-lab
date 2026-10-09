@@ -6,43 +6,43 @@
   <title>Journal Club | Sunny Psychophysics</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-slate-950 text-slate-100 font-sans antialiased selection:bg-amber-500 selection:text-slate-950 min-h-screen flex flex-col justify-between">
+<body class="bg-amber-50/30 text-slate-800 font-sans antialiased selection:bg-amber-400 selection:text-slate-950 min-h-screen flex flex-col justify-between">
 
-  <!-- Header / Navigation -->
-  <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-50">
-    <div class="max-w-5xl mx-auto px-6 py-4 flex justify-between items-center">
-      <a href="index.html" class="flex items-center space-x-3">
-        <img src="logo.png" alt="Sunny Psychophysics Logo" class="w-9 h-9 object-contain rounded" onerror="this.style.display='none'; document.getElementById('logo-fallback-jc').style.display='flex';">
-        <div id="logo-fallback-jc" class="w-8 h-8 rounded-full bg-gradient-to-tr from-amber-500 to-amber-200 hidden items-center justify-center font-bold text-slate-950 text-sm">ψ</div>
-        <span class="font-bold text-lg tracking-tight text-slate-100">Sunny Psychophysics</span>
+  <header class="border-b border-amber-200/60 bg-white/90 backdrop-blur sticky top-0 z-50 shadow-sm">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-2 sm:gap-4">
+      <a href="index.html" class="flex items-center space-x-2.5 shrink-0">
+        <img src="logo.png" alt="Sunny Psychophysics Logo" class="w-8 h-8 object-contain rounded-full bg-amber-100" onerror="this.onerror=null; this.replaceWith(document.createElement('div')); document.querySelector('.logo-fallback').classList.remove('hidden');">
+        <div class="logo-fallback hidden w-8 h-8 rounded-full bg-gradient-to-tr from-amber-400 to-amber-200 flex items-center justify-center font-bold text-slate-900 text-xs sm:text-sm shadow-sm">ψ</div>
+        <span class="font-bold text-base sm:text-lg tracking-tight text-slate-900 whitespace-nowrap">
+          <span class="hidden sm:inline">Sunny Psychophysics</span>
+          <span class="inline sm:hidden">Sunny Psycho</span>
+        </span>
       </a>
-      <nav class="flex space-x-6 text-sm font-medium text-slate-400">
-        <a href="index.html" class="hover:text-amber-400 transition-colors">About & People</a>
-        <a href="publications.html" class="hover:text-amber-400 transition-colors">Publications</a>
-        <a href="journal-club.html" class="text-amber-400 font-semibold">Journal Club</a>
+      <nav class="flex items-center space-x-3 sm:space-x-6 text-xs sm:text-sm font-semibold text-slate-600 shrink-0">
+        <a href="index.html" class="hover:text-amber-600 transition-colors whitespace-nowrap">About</a>
+        <a href="publications.html" class="hover:text-amber-600 transition-colors whitespace-nowrap">Publications</a>
+        <a href="journal-club.html" class="text-amber-600 font-bold whitespace-nowrap">Journal Club</a>
       </nav>
     </div>
   </header>
 
-  <!-- Main Section -->
-  <main class="py-16 max-w-5xl mx-auto px-6 w-full">
-    <h1 class="text-3xl font-bold tracking-tight text-white mb-2">Journal Club</h1>
-    <p class="text-slate-400 text-sm mb-8">What we are reading next in visual neuroscience, active foraging, and computational perception.</p>
+  <main class="py-12 sm:py-16 max-w-5xl mx-auto px-6 w-full">
+    <h1 class="text-3xl font-extrabold tracking-tight text-slate-900 mb-2">Journal Club</h1>
+    <p class="text-slate-600 text-sm mb-8">What we are reading next. Synced live from our visual neuroscience reading list.</p>
 
     <div id="jc-feed" class="space-y-4">
-      <div class="p-4 rounded-lg border border-slate-800 bg-slate-900/60 text-slate-400 text-sm animate-pulse">
-        Fetching reading list from Zotero...
+      <div class="p-4 rounded-xl border border-slate-200 bg-white text-slate-500 text-sm animate-pulse shadow-sm">
+        Fetching reading list...
       </div>
     </div>
   </main>
 
-  <footer class="py-8 border-t border-slate-800 text-center text-xs text-slate-500">
+  <footer class="py-8 border-t border-amber-200/60 bg-white text-center text-xs text-slate-500">
     © Sunny Psychophysics Lab — University of the Sunshine Coast
   </footer>
 
   <script>
     const ZOTERO_GROUP_ID = '6672785';
-    // Replace with 8-character Collection Key for "What we're reading next" or leave empty '' for whole library
     const JC_COLLECTION_KEY = ''; 
 
     const API_URL = (JC_COLLECTION_KEY && JC_COLLECTION_KEY.trim() !== '')
@@ -54,7 +54,7 @@
       try {
         const response = await fetch(API_URL);
         if (response.status === 403) {
-          container.innerHTML = `<div class="p-4 rounded border border-amber-800/50 bg-amber-950/20 text-amber-300 text-sm">Library Access Restricted: Ask group owner to set 'Library Reading' to 'Anyone on the internet' in Zotero group settings.</div>`;
+          container.innerHTML = `<div class="p-4 rounded-lg border border-amber-300 bg-amber-50 text-amber-800 text-sm">Library Access Restricted: Ask group owner to set 'Library Reading' to 'Anyone on the internet' in Zotero group settings.</div>`;
           return;
         }
         if (!response.ok) throw new Error(`HTTP Error ${response.status}`);
@@ -63,14 +63,14 @@
         const jcItems = items.filter(item => item.data && item.data.itemType !== 'attachment' && item.data.itemType !== 'note');
 
         if (jcItems.length === 0) {
-          container.innerHTML = `<p class="text-slate-400 text-sm">No items found in this reading list yet.</p>`;
+          container.innerHTML = `<p class="text-slate-500 text-sm">No items found in this reading list yet.</p>`;
           return;
         }
 
         container.innerHTML = '';
         jcItems.forEach(item => {
           const data = item.data;
-          const title = data.title || 'Untitled paper';
+          const title = data.title || 'Untitled';
           
           let authors = '';
           if (data.creators && Array.isArray(data.creators)) {
@@ -84,19 +84,17 @@
           const link = data.url || (data.DOI ? `https://doi.org/${data.DOI}` : '#');
 
           const card = document.createElement('div');
-          card.className = 'p-5 rounded-lg border border-slate-800 bg-slate-900/80 hover:border-amber-500/40 transition-colors group';
+          card.className = 'p-5 rounded-xl border border-slate-200/80 bg-white shadow-sm hover:border-amber-400 hover:shadow-md transition-all';
           card.innerHTML = `
-            <a href="${link}" target="_blank" rel="noopener noreferrer" class="block">
-              <span class="font-semibold text-slate-100 group-hover:text-amber-300 transition-colors text-base leading-snug">${title}</span>
-              ${authors ? `<p class="text-xs text-slate-400 mt-2">${authors}</p>` : ''}
-              ${journal ? `<p class="text-xs text-amber-500/80 mt-1 italic">${journal}</p>` : ''}
-            </a>
+            <a href="${link}" target="_blank" rel="noopener noreferrer" class="font-bold text-slate-900 hover:text-amber-600 text-base leading-snug">${title}</a>
+            ${authors ? `<p class="text-xs text-slate-600 font-medium mt-2">${authors}</p>` : ''}
+            ${journal ? `<p class="text-xs text-amber-700 mt-1 italic font-medium">${journal}</p>` : ''}
           `;
           container.appendChild(card);
         });
       } catch (e) {
         console.error(e);
-        container.innerHTML = `<p class="text-red-400 text-sm">Error connecting to Zotero API (${e.message}).</p>`;
+        container.innerHTML = `<p class="text-red-600 text-sm">Error connecting to Zotero (${e.message}).</p>`;
       }
     }
     loadJournalClub();
